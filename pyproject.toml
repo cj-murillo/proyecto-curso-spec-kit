@@ -13,6 +13,7 @@ dependencies = [
     "fastapi>=0.141.1",
     "mcp[cli]<2",
     "passlib[bcrypt]>=1.7.4",
+    "psycopg2-binary>=2.9.13",
     "pydantic-settings>=2.15.0",
     "pyjwt>=2.13.0",
     "python-dotenv>=1.2.3",
@@ -34,6 +35,7 @@ dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.0.0",
     "httpx>=0.28.1",
+    "ruff>=0.16.8",
 ]
 
 [tool.coverage.run]
@@ -50,3 +52,14 @@ omit = [
 # El umbral de services/ (>=90%) se sigue verificando por lectura del reporte
 # --cov-report=term-missing, no lo puede expresar coverage.py a nivel de paquete.
 fail_under = 80
+
+[tool.ruff]
+exclude = [".venv", "alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# E402: importa app.config después de código ejecutable, a propósito.
+# F401: usuario/gasto se importan solo para que Alembic detecte sus modelos.
+"alembic/env.py" = ["E402", "F401"]

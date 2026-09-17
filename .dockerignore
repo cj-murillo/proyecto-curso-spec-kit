@@ -1,0 +1,11 @@
+.venv/
+.git/
+.agents/
+.specify/
+specs/
+.pytest_cache/
+__pycache__/
+*.pyc
+.coverage
+gastos.db
+.env

@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: gastos-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-gastos}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gastos}
+      POSTGRES_DB: ${POSTGRES_DB:-gastos}
+    volumes:
+      - gastos_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gastos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Servicio de un solo uso: aplica las migraciones y termina (exit 0).
+  # "backend" espera a que ESTE servicio termine con éxito antes de arrancar.
+  migrate:
+    build: .
+    container_name: gastos-migrate
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-gastos}:${POSTGRES_PASSWORD:-gastos}@db:5432/${POSTGRES_DB:-gastos}
+    command: ["uv", "run", "--no-sync", "alembic", "upgrade", "head"]
+    restart: "no"
+
+  backend:
+    build: .
+    container_name: gastos-backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-gastos}:${POSTGRES_PASSWORD:-gastos}@db:5432/${POSTGRES_DB:-gastos}
+    restart: unless-stopped
+
+volumes:
+  gastos_db_data:

@@ -50,7 +50,7 @@ def test_registrar_gasto_usa_identidad_del_token_verificado(db_en_memoria, monke
     from app.repositories import usuarios as usuarios_repository
     from app.security import hash_password
 
-    usuario = usuarios_repository.guardar(db, "real@ejemplo.com", hash_password("x"))
+    usuarios_repository.guardar(db, "real@ejemplo.com", hash_password("x"))
     db.close()
 
     monkeypatch.setattr(mcp_gastos, "get_access_token", lambda: _AccessTokenFalso("real@ejemplo.com"))
