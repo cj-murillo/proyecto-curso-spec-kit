@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches-ignore: ["main"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@caf0cab7a618c569241d31dcd442f54681755d39 # v3
+        with:
+          version: "latest"
+
+      - name: Instalar dependencias
+        run: uv sync --frozen
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Tests con cobertura
+        env:
+          SECRET_KEY: clave-de-prueba-solo-para-ci
+        run: |
+          uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=80
+
+      - name: Verificar que la imagen construye
+        run: docker build -t gastos-backend:ci .
