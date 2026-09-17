@@ -58,7 +58,9 @@ def test_registrar_email_duplicado_devuelve_400(client):
 
 
 def test_login_credenciales_invalidas_401(client):
-    client.post("/usuarios/", json={"email": "test@ejemplo.com", "password": "clave123"})
+    client.post(
+        "/usuarios/", json={"email": "test@ejemplo.com", "password": "clave123"}
+    )
     response = client.post(
         "/usuarios/token",
         data={"username": "test@ejemplo.com", "password": "clave-incorrecta"},
