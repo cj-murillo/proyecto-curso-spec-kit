@@ -37,7 +37,7 @@ def test_registrar_y_login(client):
     response = client.post(
         "/usuarios/", json={"email": "nuevo@ejemplo.com", "password": "clave123"}
     )
-    assert response.status_code == 999
+    assert response.status_code == 201
     assert response.json()["email"] == "nuevo@ejemplo.com"
     assert "password" not in response.json()
 
