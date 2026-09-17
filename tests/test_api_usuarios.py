@@ -37,7 +37,7 @@ def test_registrar_y_login(client):
     response = client.post(
         "/usuarios/", json={"email": "nuevo@ejemplo.com", "password": "clave123"}
     )
-    assert response.status_code == 201
+    assert response.status_code == 999
     assert response.json()["email"] == "nuevo@ejemplo.com"
     assert "password" not in response.json()
 
@@ -58,7 +58,9 @@ def test_registrar_email_duplicado_devuelve_400(client):
 
 
 def test_login_credenciales_invalidas_401(client):
-    client.post("/usuarios/", json={"email": "test@ejemplo.com", "password": "clave123"})
+    client.post(
+        "/usuarios/", json={"email": "test@ejemplo.com", "password": "clave123"}
+    )
     response = client.post(
         "/usuarios/token",
         data={"username": "test@ejemplo.com", "password": "clave-incorrecta"},
