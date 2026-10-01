@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import settings
 from app.logging_config import configurar_logging
-from app.routers import usuarios, gastos
+from app.routers import usuarios, gastos, health
 from app.mcp.server import mcp as mcp_server
 
 configurar_logging(settings.log_level)
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # services/gastos.py), servido como una sub-app ASGI montable en FastAPI.
 # Se crea ANTES de entrar al lifespan: mcp_server.session_manager es lazy y
 # solo existe después de llamar a streamable_http_app().
-mcp_app = mcp_server.streamable_http_app()
+mcp_app = mcp_server.streamable_http_app(streamable_http_path="/")
 
 # El SDK registra las rutas de metadata OAuth (RFC 9728) DENTRO de mcp_app,
 # p. ej. "/.well-known/oauth-protected-resource/mcp". Como mcp_app se monta
@@ -53,6 +53,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="API de Control de Gastos", lifespan=lifespan)
 app.include_router(usuarios.router)
 app.include_router(gastos.router)
+app.include_router(health.router)
 app.router.routes.extend(rutas_well_known)
 app.mount("/mcp", mcp_app)
 

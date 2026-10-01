@@ -1,18 +1,12 @@
 import pytest
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from app.database import Base
 from app.repositories import usuarios as usuarios_repository
 from app.repositories import gastos as gastos_repository
 from app.services import gastos as gastos_service
 
 
 @pytest.fixture
-def db_session():
-    engine = create_engine("sqlite:///:memory:")
-    Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine)
-    db = SessionLocal()
+def db_session(SessionLocalDePrueba):
+    db = SessionLocalDePrueba()
     yield db
     db.close()
 

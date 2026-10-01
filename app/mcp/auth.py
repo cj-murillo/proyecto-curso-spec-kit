@@ -21,4 +21,5 @@ class JWTTokenVerifier(TokenVerifier):
             scopes=["gastos"],
             expires_at=payload.get("exp"),
             subject=email,
+            claims={"uid": payload.get("uid")},
         )

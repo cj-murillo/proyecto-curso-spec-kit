@@ -1,12 +1,11 @@
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from app.mcp.tools import gastos
 from mcp.server.auth.settings import AuthSettings
 from app.config import settings
 from app.mcp.auth import JWTTokenVerifier
 
-mcp = FastMCP(
+mcp = MCPServer(
     "gastos-server",
-    streamable_http_path="/",
     token_verifier=JWTTokenVerifier(),
     auth=AuthSettings(
         issuer_url=settings.mcp_issuer_url,

@@ -1,6 +1,10 @@
 import pytest
 from app.services import usuarios as usuarios_service
-from app.services.usuarios import EmailYaRegistradoError, CredencialesInvalidasError
+from app.services.usuarios import (
+    EmailYaRegistradoError,
+    CredencialesInvalidasError,
+    UsuarioNoEncontradoError,
+)
 from app.security import hash_password
 
 
@@ -22,6 +26,10 @@ class RepositorioUsuarioFalso:
     def guardar(self, db, email, hashed_password):
         usuario = self._UsuarioFalso(len(self._usuarios) + 1, email, hashed_password)
         self._usuarios[email] = usuario
+        return usuario
+
+    def actualizar_password(self, db, usuario, hashed_password):
+        usuario.hashed_password = hashed_password
         return usuario
 
 
@@ -60,3 +68,26 @@ def test_autenticar_credenciales_invalidas():
 
     with pytest.raises(CredencialesInvalidasError):
         usuarios_service.autenticar_usuario(None, "no-existe@ejemplo.com", "clave123", repo=repo)
+
+
+def test_autenticar_hash_invalidado_lanza_credenciales_invalidas():
+    repo = RepositorioUsuarioFalso()
+    repo.guardar(None, "viejo@ejemplo.com", "!bcrypt-invalidado")
+
+    with pytest.raises(CredencialesInvalidasError):
+        usuarios_service.autenticar_usuario(None, "viejo@ejemplo.com", "clave123", repo=repo)
+
+
+def test_resetear_password_permite_login_con_la_nueva():
+    repo = RepositorioUsuarioFalso()
+    repo.guardar(None, "viejo@ejemplo.com", "!bcrypt-invalidado")
+
+    usuarios_service.resetear_password(None, "viejo@ejemplo.com", "nueva-clave", repo=repo)
+
+    usuario = usuarios_service.autenticar_usuario(None, "viejo@ejemplo.com", "nueva-clave", repo=repo)
+    assert usuario.hashed_password.startswith("$argon2id$")
+
+
+def test_resetear_password_email_inexistente_lanza_error():
+    with pytest.raises(UsuarioNoEncontradoError):
+        usuarios_service.resetear_password(None, "nadie@ejemplo.com", "x", repo=RepositorioUsuarioFalso())

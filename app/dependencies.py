@@ -28,7 +28,9 @@ def get_current_user(
         raise credenciales_exception
 
     usuario = usuarios_repository.obtener_por_email(db, email)
-    if usuario is None:
+    # El token debe identificar al MISMO usuario por email (sub) y por id (uid): un email
+    # reasignado a otra persona nunca hereda un token anterior (FR-018/FR-019).
+    if usuario is None or payload.get("uid") != usuario.id:
         raise credenciales_exception
     return usuario
 
