@@ -1,18 +1,24 @@
 from datetime import datetime, timedelta, timezone
 import jwt
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.exceptions import UnknownHashError
+from pwdlib.hashers.argon2 import Argon2Hasher
 from app.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+password_hash = PasswordHash((Argon2Hasher(),))
 ALGORITHM = "HS256"
 
 
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return password_hash.hash(password)
 
 
 def verify_password(password: str, hashed: str) -> bool:
-    return pwd_context.verify(password, hashed)
+    try:
+        return password_hash.verify(password, hashed)
+    except UnknownHashError:
+        # Hash de otro esquema (p. ej. bcrypt legado ya invalidado): credencial inválida, no error.
+        return False
 
 
 def crear_access_token(data: dict) -> str:
