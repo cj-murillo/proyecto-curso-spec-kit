@@ -9,6 +9,20 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: gastos
+          POSTGRES_PASSWORD: gastos
+          POSTGRES_DB: gastos_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gastos"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout código
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -27,6 +41,8 @@ jobs:
       - name: Tests con cobertura
         env:
           SECRET_KEY: clave-de-prueba-solo-para-ci
+          DATABASE_URL: postgresql+psycopg://gastos:gastos@localhost:5432/gastos
+          TEST_DATABASE_URL: postgresql+psycopg://gastos:gastos@localhost:5432/gastos_test
         run: |
           uv run pytest --cov=app --cov-report=term-missing --cov-fail-under=80
 
