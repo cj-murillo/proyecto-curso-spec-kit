@@ -17,7 +17,9 @@ from app.models import (
     gasto,
 )  # noqa: F401 (necesario para que Alembic los detecte)
 
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option(
+    "sqlalchemy.url", config.attributes.get("database_url", settings.database_url)
+)
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
