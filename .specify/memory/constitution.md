@@ -32,15 +32,20 @@
 ## Artículo III — Persistencia
 1. SQLAlchemy como ORM, Alembic para migraciones. Ninguna sentencia SQL cruda
    concatenada con strings.
-2. SQLite en desarrollo; el código de `database.py` debe funcionar contra
-   Postgres sin tocar `services/` ni `routers/` (usar `connect_args`
-   condicional solo para SQLite).
+2. Postgres en desarrollo y tests (driver `psycopg` 3); `database.py` no
+   depende del motor: cambiarlo no toca `services/` ni `routers/`.
 3. Cada modelo con datos de usuario incluye `usuario_id` como FK. Ninguna
    consulta de datos de usuario puede omitir el filtro por `usuario_id`.
+   Única excepción: `obtener_por_id` lee un gasto por `id` sin ese filtro
+   porque el service necesita distinguir 403 (existe pero es de otro
+   usuario) de 404 (no existe); el service compara el dueño antes de exponer
+   o modificar nada, y `actualizar`/`eliminar` sí filtran por `usuario_id`.
 
 ## Artículo IV — Seguridad (no negociable)
-1. Contraseñas: hash con `passlib[bcrypt]`. Nunca se guarda ni se loguea una
-   contraseña en texto plano.
+1. Contraseñas: hash con `pwdlib` + Argon2. Los hashes de otros esquemas (p. ej.
+   bcrypt legado) se invalidan en una migración de Alembic y el usuario
+   recupera el acceso vía reset administrativo. Nunca se guarda ni se loguea
+   una contraseña en texto plano.
 2. Autenticación: OAuth2 password flow + JWT firmado con HS256.
    `ACCESS_TOKEN_EXPIRE_MINUTES` configurable, nunca infinito.
 3. `SECRET_KEY` y `DATABASE_URL` viven solo en `.env` (nunca versionado).
@@ -62,7 +67,9 @@
 
 ## Artículo V — Diseño de endpoints REST
 1. Convención de verbos y códigos: `POST` crea (`201`), `GET` lista/lee
-   (`200`), fallo de autenticación (`401`), recurso no encontrado (`404`),
+   (`200`), `PUT`/`PATCH` actualizan (`200`), `DELETE` y las acciones sin
+   cuerpo de respuesta (`204`), fallo de autenticación (`401`), recurso no
+   encontrado (`404`), servicio no disponible (`503`),
    error de validación de schema (`422`), error de regla de negocio conocido
    (`400` con `{"detail": "..."}`). `403` se reserva para el caso en que el
    recurso solicitado existe pero pertenece a otro usuario y la operación lo
@@ -80,7 +87,7 @@
    necesita lógica que no existe en `services/`, esa lógica se agrega en
    `services/` primero, y la tool la reutiliza — nunca al revés.
 2. La descripción de cada tool es específica y accionable (ej. "Registra un
-   gasto con descripción, monto y categoría, validando el límite mensual por
+   gasto con descripción, monto y categoría, validando el límite acumulado por
    categoría"), nunca genérica ("maneja gastos").
 3. Errores de negocio se devuelven como una estructura clara
    (`{"error": "..."}`), nunca como una excepción sin controlar que rompa
@@ -115,8 +122,8 @@
      arranque, no lógica de negocio, y su exclusión está declarada
      explícitamente en `[tool.coverage.run] omit` de `pyproject.toml`, nunca
      como una omisión silenciosa.
-4. Tests de integración corren contra una base de datos real (SQLite en
-   memoria como mínimo), nunca contra el repositorio falso.
+4. Tests de integración corren contra una base de datos real (Postgres,
+   `TEST_DATABASE_URL`), nunca contra SQLite ni contra el repositorio falso.
 5. Tests de API usan `app.dependency_overrides` de FastAPI para sustituir
    `get_db`, `get_gastos_repo` y `get_current_user` — nunca levantan un
    servidor real ni golpean la base de datos de desarrollo.
@@ -145,4 +152,4 @@ Esta constitución tiene prioridad sobre cualquier decisión tomada durante
 señalarlo explícitamente y esperar aprobación antes de continuar, no
 decidir en silencio.
 
-**Version**: 1.1.0 | **Ratified**: 2026-09-14 | **Last Amended**: 2026-09-14
+**Version**: 1.4.0 | **Ratified**: 2026-09-14 | **Last Amended**: 2026-10-01
