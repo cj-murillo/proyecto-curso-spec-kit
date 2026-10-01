@@ -64,7 +64,8 @@ def _total(SessionLocal, usuario_id):
 
 def test_dos_altas_simultaneas_de_60_solo_una_entra(escenario):
     SessionLocal, uid, _ = escenario
-    alta = lambda db: svc.registrar_gasto(db, uid, "x", 60.0, "comida", repo=RepoLento())
+    def alta(db):
+        return svc.registrar_gasto(db, uid, "x", 60.0, "comida", repo=RepoLento())
 
     resultados = _correr_a_la_vez(SessionLocal, [alta, alta])
 
@@ -74,8 +75,10 @@ def test_dos_altas_simultaneas_de_60_solo_una_entra(escenario):
 
 def test_una_edicion_y_un_alta_simultaneas_respetan_el_limite(escenario):
     SessionLocal, uid, gid = escenario
-    alta = lambda db: svc.registrar_gasto(db, uid, "x", 60.0, "comida", repo=RepoLento())
-    edicion = lambda db: svc.actualizar_gasto(db, uid, gid, {"monto": 160.0}, repo=RepoLento())
+    def alta(db):
+        return svc.registrar_gasto(db, uid, "x", 60.0, "comida", repo=RepoLento())
+    def edicion(db):
+        return svc.actualizar_gasto(db, uid, gid, {"monto": 160.0}, repo=RepoLento())
 
     resultados = _correr_a_la_vez(SessionLocal, [alta, edicion])
 
@@ -85,12 +88,14 @@ def test_una_edicion_y_un_alta_simultaneas_respetan_el_limite(escenario):
 
 def test_dos_ediciones_simultaneas_del_mismo_gasto_no_se_mezclan(escenario):
     SessionLocal, uid, gid = escenario
-    a = lambda db: svc.actualizar_gasto(
-        db, uid, gid, {"monto": 120.0, "descripcion": "A"}, repo=RepoLento()
-    )
-    b = lambda db: svc.actualizar_gasto(
-        db, uid, gid, {"monto": 130.0, "descripcion": "B"}, repo=RepoLento()
-    )
+    def a(db):
+        return svc.actualizar_gasto(
+            db, uid, gid, {"monto": 120.0, "descripcion": "A"}, repo=RepoLento()
+        )
+    def b(db):
+        return svc.actualizar_gasto(
+            db, uid, gid, {"monto": 130.0, "descripcion": "B"}, repo=RepoLento()
+        )
 
     assert _correr_a_la_vez(SessionLocal, [a, b]) == ["ok", "ok"]
 
