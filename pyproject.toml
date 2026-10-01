@@ -34,6 +34,7 @@ dev = [
     "pytest>=9.1.1",
     "pytest-cov>=7.0.0",
     "httpx2",
+    "ruff>=0.16.8",
 ]
 
 [tool.pytest.ini_options]
@@ -57,3 +58,14 @@ omit = [
 # El umbral de services/ (>=90%) se sigue verificando por lectura del reporte
 # --cov-report=term-missing, no lo puede expresar coverage.py a nivel de paquete.
 fail_under = 80
+
+[tool.ruff]
+exclude = [".venv", "alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.ruff.lint.per-file-ignores]
+# E402: importa app.config después de código ejecutable, a propósito.
+# F401: usuario/gasto se importan solo para que Alembic detecte sus modelos.
+"alembic/env.py" = ["E402", "F401"]
